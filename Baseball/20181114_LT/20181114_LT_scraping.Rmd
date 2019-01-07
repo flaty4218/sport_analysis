@@ -1,0 +1,315 @@
+---
+title: "20181114_LT_scraping"
+output: html_document
+---
+
+# Summary
+
+プロ野球のデータをスクレイピングしcsvファイルとして書き出す  
+スクレイピング対象のサイトはプロ野球データFreak(https://baseball-data.com/)  
+公式サイトよりデータがリッチだったのでこのサイトにした  
+
+# Library
+```{r}
+library(tidyverse)
+library(rvest)
+```
+
+# Web Scraping
+
+2018年度データの取得
+```{r}
+team_list <- list("t", "yb", "g", "d", "s", "h", "l", "e", "bs", "f", "m")#c=広島は除く
+
+#-----選手情報の取得-----
+URL <- paste0("https://baseball-data.com/player/c/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = "c") -> ret
+
+for (i in team_list) {
+  URL <- paste0("https://baseball-data.com/player/", i, "/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = i) -> ret2
+
+ret <- dplyr::bind_rows(ret, ret2)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+}
+
+ret$team %>% 
+  str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+  str_replace_all(pattern="l", replacement="西武") %>%
+  str_replace_all(pattern="e", replacement="楽天") %>%
+  str_replace_all(pattern="bs", replacement="オリックス") %>%
+  str_replace_all(pattern="f", replacement="日ハム") %>%
+  str_replace_all(pattern="m", replacement="ロッテ") %>% 
+  str_replace_all(pattern="c", replacement="広島") %>%
+  str_replace_all(pattern="t", replacement="阪神") %>%
+  str_replace_all(pattern="yb", replacement="横浜") %>%
+  str_replace_all(pattern="g", replacement="巨人") %>%
+  str_replace_all(pattern="d", replacement="中日") %>%
+  str_replace_all(pattern="s", replacement="ヤクルト")  -> ret$team
+
+profile_2018 <- ret
+
+#-----打撃成績の取得-----
+URL <- paste0("https://baseball-data.com/stats/hitter-c/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = "c") -> ret
+
+for (i in team_list) {
+  URL <- paste0("https://baseball-data.com/stats/hitter-", i, "/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = i) -> ret2
+
+ret <- dplyr::bind_rows(ret, ret2)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+}
+
+ret$team %>% 
+  str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+  str_replace_all(pattern="l", replacement="西武") %>%
+  str_replace_all(pattern="e", replacement="楽天") %>%
+  str_replace_all(pattern="bs", replacement="オリックス") %>%
+  str_replace_all(pattern="f", replacement="日ハム") %>%
+  str_replace_all(pattern="m", replacement="ロッテ") %>% 
+  str_replace_all(pattern="c", replacement="広島") %>%
+  str_replace_all(pattern="t", replacement="阪神") %>%
+  str_replace_all(pattern="yb", replacement="横浜") %>%
+  str_replace_all(pattern="g", replacement="巨人") %>%
+  str_replace_all(pattern="d", replacement="中日") %>%
+  str_replace_all(pattern="s", replacement="ヤクルト")  -> ret$team
+
+batting_2018 <- ret
+
+#-----投球成績の取得-----
+URL <- paste0("https://baseball-data.com/stats/pitcher-c/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = "c") -> ret
+
+for (i in team_list) {
+  URL <- paste0("https://baseball-data.com/stats/pitcher-", i, "/")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl"]') %>% 
+  html_table() %>% 
+  dplyr::mutate(team = i) -> ret2
+
+ret <- dplyr::bind_rows(ret, ret2)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+}
+
+ret$team %>% 
+  str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+  str_replace_all(pattern="l", replacement="西武") %>%
+  str_replace_all(pattern="e", replacement="楽天") %>%
+  str_replace_all(pattern="bs", replacement="オリックス") %>%
+  str_replace_all(pattern="f", replacement="日ハム") %>%
+  str_replace_all(pattern="m", replacement="ロッテ") %>% 
+  str_replace_all(pattern="c", replacement="広島") %>%
+  str_replace_all(pattern="t", replacement="阪神") %>%
+  str_replace_all(pattern="yb", replacement="横浜") %>%
+  str_replace_all(pattern="g", replacement="巨人") %>%
+  str_replace_all(pattern="d", replacement="中日") %>%
+  str_replace_all(pattern="s", replacement="ヤクルト")  -> ret$team
+
+pitching_2018 <- ret
+
+#-----各データにyear(年度)のカラムを追加する
+profile_2018 %>%
+  dplyr::mutate(year = 18) -> profile_2018
+
+batting_2018 %>%
+  dplyr::mutate(year = 18) -> batting_2018
+
+pitching_2018 %>%
+  dplyr::mutate(year = 18) -> pitching_2018
+```
+
+2010~2017年度データの取得
+```{r}
+#-----2017年度以前のデータも同様に取得する
+
+#-----選手情報の取得-----
+ret3 <- profile_2018
+
+for (t in 10:17) {
+  URL <- paste0("https://baseball-data.com/", t, "/player/c/")
+  URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="tbl"]') %>% 
+    html_table() %>% 
+    dplyr::mutate(team = "c") -> ret
+
+  for (i in team_list) {
+    URL <- paste0("https://baseball-data.com/", t, "/player/", i, "/")
+    URL %>% 
+      read_html() %>% 
+      html_node(xpath = '//*[@id="tbl"]') %>% 
+      html_table() %>% 
+      dplyr::mutate(team = i) -> ret2
+
+    ret <- dplyr::bind_rows(ret, ret2)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+  ret %>% 
+    dplyr::mutate(year = t) -> ret2
+  
+  ret3 <- dplyr::bind_rows(ret2, ret3)
+
+  ret3$team %>% 
+    str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+    str_replace_all(pattern="l", replacement="西武") %>%
+    str_replace_all(pattern="e", replacement="楽天") %>%
+    str_replace_all(pattern="bs", replacement="オリックス") %>%
+    str_replace_all(pattern="f", replacement="日ハム") %>%
+    str_replace_all(pattern="m", replacement="ロッテ") %>% 
+    str_replace_all(pattern="c", replacement="広島") %>%
+    str_replace_all(pattern="t", replacement="阪神") %>%
+    str_replace_all(pattern="yb", replacement="横浜") %>%
+    str_replace_all(pattern="g", replacement="巨人") %>%
+    str_replace_all(pattern="d", replacement="中日") %>%
+    str_replace_all(pattern="s", replacement="ヤクルト")  -> ret3$team
+}
+profile <- ret3
+profile$year <- profile$year + 2000
+
+#-----打撃成績の取得-----
+ret3 <- batting_2018
+
+for (t in 10:17) {
+  URL <- paste0("https://baseball-data.com/", t, "/stats/hitter-c/")
+  URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="tbl"]') %>% 
+    html_table() %>% 
+    dplyr::mutate(team = "c") -> ret
+
+  for (i in team_list) {
+    URL <- paste0("https://baseball-data.com/", t, "/stats/hitter-", i, "/")
+    URL %>% 
+      read_html() %>% 
+      html_node(xpath = '//*[@id="tbl"]') %>% 
+      html_table() %>% 
+      dplyr::mutate(team = i) -> ret2
+
+    ret <- dplyr::bind_rows(ret, ret2)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+  ret %>% 
+    dplyr::mutate(year = t) -> ret2
+  
+  ret3 <- dplyr::bind_rows(ret2, ret3)
+
+  ret3$team %>% 
+    str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+    str_replace_all(pattern="l", replacement="西武") %>%
+    str_replace_all(pattern="e", replacement="楽天") %>%
+    str_replace_all(pattern="bs", replacement="オリックス") %>%
+    str_replace_all(pattern="f", replacement="日ハム") %>%
+    str_replace_all(pattern="m", replacement="ロッテ") %>% 
+    str_replace_all(pattern="c", replacement="広島") %>%
+    str_replace_all(pattern="t", replacement="阪神") %>%
+    str_replace_all(pattern="yb", replacement="横浜") %>%
+    str_replace_all(pattern="g", replacement="巨人") %>%
+    str_replace_all(pattern="d", replacement="中日") %>%
+    str_replace_all(pattern="s", replacement="ヤクルト")  -> ret3$team
+}
+batting <- ret3
+batting$year <- batting$year + 2000
+
+#-----投球成績の取得-----
+ret3 <- pitching_2018
+
+for (t in 10:17) {
+  URL <- paste0("https://baseball-data.com/", t, "/stats/pitcher-c/")
+  URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="tbl"]') %>% 
+    html_table() %>% 
+    dplyr::mutate(team = "c") -> ret
+
+  for (i in team_list) {
+    URL <- paste0("https://baseball-data.com/", t, "/stats/pitcher-", i, "/")
+    URL %>% 
+      read_html() %>% 
+      html_node(xpath = '//*[@id="tbl"]') %>% 
+      html_table() %>% 
+      dplyr::mutate(team = i) -> ret2
+
+    ret <- dplyr::bind_rows(ret, ret2)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+  ret %>% 
+    dplyr::mutate(year = t) -> ret2
+  
+  ret3 <- dplyr::bind_rows(ret2, ret3)
+
+  ret3$team %>% 
+    str_replace_all(pattern="h", replacement="ソフトバンク") %>%
+    str_replace_all(pattern="l", replacement="西武") %>%
+    str_replace_all(pattern="e", replacement="楽天") %>%
+    str_replace_all(pattern="bs", replacement="オリックス") %>%
+    str_replace_all(pattern="f", replacement="日ハム") %>%
+    str_replace_all(pattern="m", replacement="ロッテ") %>% 
+    str_replace_all(pattern="c", replacement="広島") %>%
+    str_replace_all(pattern="t", replacement="阪神") %>%
+    str_replace_all(pattern="yb", replacement="横浜") %>%
+    str_replace_all(pattern="g", replacement="巨人") %>%
+    str_replace_all(pattern="d", replacement="中日") %>%
+    str_replace_all(pattern="s", replacement="ヤクルト")  -> ret3$team
+}
+pitching <- ret3
+pitching$year <- pitching$year + 2000
+```
+
+チームごとの打撃成績も取得
+```{r}
+URL <- paste0("https://baseball-data.com/team/hitter.html")
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl-ce"]') %>% 
+  html_table() -> ret
+URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="tbl-ce"][2]') %>% 
+  html_table() -> ret2
+team_batting <- dplyr::bind_rows(ret, ret2)
+```
+
+# Write csv file
+```{r}
+profile %>% readr::write_csv("profile.csv")
+batting %>% readr::write_csv("batting.csv")
+pitching %>% readr::write_csv("pitching.csv")
+team_batting %>% readr::write_csv("team_batting.csv")
+```

@@ -1,0 +1,587 @@
+---
+title: "20181114_LT_EDA"
+output:
+  html_document:
+    number_sections: true
+    fig_caption: true
+    toc: true
+    md_extensions: -ascii_identifiers
+    code_folding: hide
+    #toc_float: true
+    theme: lumen
+    highlight: pygments
+---
+
+# Introduction
+
+プロ野球のデータをスクレイピングしcsvファイルとして書き出す  
+スクレイピング対象のサイトはプロ野球データFreak(https://baseball-data.com/)  
+
+# Prepare {.tabset .tabset-fade .tabset-pills}
+
+## Load Library
+```{r}
+library(tidyverse)
+library(plotly)
+```
+
+## Options
+```{r}
+#ggplotの文字化け対策
+theme_set( theme_bw(base_family = "HiraKakuProN-W3"))
+```
+
+## Load Data
+```{r}
+profile <- readr::read_csv("profile.csv")
+batting <- readr::read_csv("batting.csv")
+pitching <- readr::read_csv("pitching.csv")
+team_batting <- readr::read_csv("team_batting.csv")
+```
+
+## Data Structure
+```{r}
+profile %>% str()
+batting %>% str()
+pitching %>% str()
+team_batting %>% str()
+```
+
+## Data ETL
+数値であってほしいカラムが文字列で入っているので変換する  
+(時間の都合上、今回は分析に関係のあるカラムのみ変換する)
+```{r}
+#-----profile-----
+##年齢から"歳"の文字列を削除&数値型に変換
+profile$年齢 %>% 
+  str_replace_all(pattern="歳", replacement="") %>% 
+  as.numeric() -> profile$年齢
+
+#-----batting-----
+##打席数を数値型に変換
+batting$打席数 %>% 
+  as.numeric() -> batting$打席数
+##打数を数値型に変換
+batting$打数 %>% 
+  as.numeric() -> batting$打数
+##OPSを数値型に変換
+batting$OPS %>% 
+  as.numeric() -> batting$OPS
+
+#-----pitching-----
+##今回はpitchingデータは扱わないのでSkip
+```
+
+## Join Data
+今回の分析に必要な情報にカラムを絞ってから、profileとbattingをjoinする
+```{r}
+profile %>% 
+  dplyr::select(year, team, 選手名, 守備, 年齢) -> ret
+
+batting %>% 
+  dplyr::select(year, team, 選手名, 打席数, 打数, OPS) -> ret2
+
+df <- dplyr::inner_join(ret, ret2, by=c("year", "team", "選手名"))
+```
+
+
+# Check Data {.tabset .tabset-fade .tabset-pills}
+
+## Data Structure & Summary
+```{r}
+df %>% str()
+```
+
+```{r}
+df %>% summary()
+```
+
+## barplot year & team & 守備
+スクレイピングしたデータに偏りがないか確認  
+  
+year
+```{r}
+ret <- df
+ret$year <- as.character(ret$year)
+
+ret %>% 
+  dplyr::select(year) %>% 
+  dplyr::group_by(year) %>% 
+  dplyr::summarise(count = n()) %>%
+  ggplot(aes(x = year, y = count, fill = year)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip()
+```
+
+team
+```{r}
+df %>% 
+  dplyr::select(team) %>% 
+  dplyr::group_by(team) %>% 
+  dplyr::summarise(count = n()) %>%
+  ggplot(aes(x = team, y = count, fill = team)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip()
+```
+
+守備
+```{r}
+df %>% 
+  dplyr::select(守備) %>% 
+  dplyr::group_by(守備) %>% 
+  dplyr::summarise(count = n()) %>%
+  ggplot(aes(x = 守備, y = count, fill = 守備)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip()
+```
+
+## Histgram 年齢
+```{r}
+df %>% 
+  ggplot(aes(x = 年齢)) + 
+  geom_histogram()
+```
+
+## Histgram 打席数&打数
+
+打席数
+```{r}
+df %>% 
+  ggplot(aes(x = 打席数)) + 
+  geom_histogram()
+```
+
+打数
+```{r}
+df %>% 
+  ggplot(aes(x = 打数)) + 
+  geom_histogram()
+```
+
+## Histgram OPS
+```{r}
+df %>% 
+  ggplot(aes(x = OPS)) + 
+  geom_histogram()
+```
+
+OPS>1.5は打席数が少ない選手のデータと思われるのでfilter
+```{r}
+df %>% 
+  dplyr::filter(OPS < 1.5) %>%
+  ggplot(aes(x = OPS)) + 
+  geom_histogram()
+```
+
+# EDA (profileデータ[2018]) {.tabset .tabset-fade .tabset-pills}
+
+まずは2018年度のプロフィールデータに絞って傾向をみていく
+
+## 各チームの人数
+
+育成選手が多い、巨人とソフトバンクが全体の人数も多くなっている
+```{r}
+profile %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) -> ret
+
+ret %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::group_by(team) %>% 
+  dplyr::summarise(count = n()) %>% 
+  ggplot(aes(x = team, y = count, fill = team)) + 
+  geom_bar(stat = "identity") + 
+  #coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+## 各チームの年齢分布
+
+ヤクルトやばそう
+```{r}
+profile %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) -> ret
+
+ret %>% 
+  dplyr::filter(year == 2018) %>% 
+  ggplot(aes(x = team, y = 年齢, fill = team)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+# EDA (battingデータ) {.tabset .tabset-fade .tabset-pills}
+
+ここからjoinして作成したdfを使う
+
+## 各チームの年齢分布(2018)
+
+今シーズン出場記録がある野手の年齢分布  
+こうしてみるとヤクルトはそれほどやばそうではない...
+```{r}
+df %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) -> ret
+
+ret %>% 
+  dplyr::filter(year == 2018) %>% 
+  ggplot(aes(x = team, y = 年齢, fill = team)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+## 各チームのOPS分布(2018)
+
+今シーズン100打席以上の打者のOPS分布  
+広島、西武の打力がすごそう
+```{r}
+df %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) -> ret
+
+ret %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::filter(打数 >= 100) %>% 
+  ggplot(aes(x = team, y = OPS, fill = team)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+## 各チームの(OPS-0.73)*打席数分布(2018)
+
+OPSの平均は0.73?くらい  
+平均を超えて、たくさん打席に立ってる方が得点への貢献が高いと考えられる  
+可視化してみたところいい感じ
+```{r}
+df %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) -> ret
+
+ret %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  ggplot(aes(x = team, y = x, fill = team)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+## (OPS-0.73)*打数のTop10(2018)
+
+Top10はこんな感じ  
+実際の活躍とほぼ一致してそう
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(OPS2 = (OPS - 0.73) * 打席数) %>% 
+  dplyr::arrange(desc(OPS2)) %>% 
+  head(10L) %>% 
+  knitr::kable()
+```
+
+## (OPS-0.73)*打席数の年齢推移
+
+一定のピークがあって以降は徐々に落ちると思いきやそうでもない
+```{r}
+df %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(年齢) %>% 
+  dplyr::summarise(x = sum(x, na.rm = TRUE)) %>%
+  ggplot(aes(x = 年齢, y = x)) +
+  geom_line()
+```
+
+## 球団ごとの(OPS-0.73)*打席数(2018)
+
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(team) %>%
+  dplyr::summarise(OPS2 = sum(x, na.rm = TRUE)) %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) %>% 
+  ggplot(aes(x = team, y = OPS2, fill = team)) + 
+  geom_bar(stat = "identity") + 
+  #coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+  
+```
+
+## (OPS-0.73)*打席数と得点数の散布図
+
+かなりいい感じの相関がある!
+```{r}
+#joinするためにDeNAを横浜に変換
+ret <- team_batting
+ret$チーム %>% 
+  stringr::str_replace("DeNA", "横浜") %>%
+  stringr::str_replace("日本ハム", "日ハム") -> ret$チーム
+
+ret %>% 
+  dplyr::select(チーム, 得点) -> ret
+names(ret) <- c("team", "得点")
+
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(team) %>%
+  dplyr::summarise(OPS2 = sum(x, na.rm = TRUE)) -> ret2
+
+dplyr::inner_join(ret, ret2) %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) %>% 
+    ggplot(aes(x = OPS2, y = 得点, colour = team)) + 
+  stat_smooth(method = "lm", colour = "black", size = 1) +
+  geom_point(size = 5) + 
+  scale_colour_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+線形回帰モデルを使ったところ、x_sumが1増えると得点が0.2984増える
+```{r}
+#joinするためにDeNAを横浜に変換
+ret <- team_batting
+ret$チーム %>% 
+  stringr::str_replace("DeNA", "横浜") %>%
+  stringr::str_replace("日本ハム", "日ハム") -> ret$チーム
+
+ret %>% 
+  dplyr::select(チーム, 得点) -> ret
+names(ret) <- c("team", "得点")
+
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(team) %>%
+  dplyr::summarise(OPS2 = sum(x, na.rm = TRUE)) -> ret2
+
+dplyr::inner_join(ret, ret2) -> ret
+
+lm(ret$得点~ret$OPS2)
+```
+
+## 丸が移籍した場合(ロッテver)
+
+ロッテの外野手
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::filter(team == "ロッテ" & 守備 == "外野手") %>%
+  dplyr::mutate(OPS2 = (OPS - 0.73) * 打席数) %>% 
+  dplyr::arrange(desc(打席数)) %>% 
+  head(5L) %>% 
+  knitr::kable()
+```
+
+広島の外野手
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::filter(team == "広島" & 守備 == "外野手") %>%
+  dplyr::mutate(OPS2 = (OPS - 0.73) * 打席数) %>% 
+  dplyr::arrange(desc(打席数)) %>% 
+  head(5L) %>% 
+  knitr::kable()
+```
+
+巨人は清田の-39.087が丸の207.156になると仮定して+246.385  
+広島は丸の207.156がバティスタの37.448になると仮定して-169.708
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(team) %>%
+  dplyr::summarise(OPS2 = sum(x, na.rm = TRUE)) -> ret
+
+ret[4,2] <- ret[4,2] + 246.385
+ret[8,2] <- ret[8,2] - 169.708
+
+ret %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) %>% 
+  ggplot(aes(x = team, y = OPS2, fill = team)) + 
+  geom_bar(stat = "identity") + 
+  #coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+やっぱり丸はすごい...
+
+## 丸が移籍した場合(巨人ver)
+
+巨人の外野手
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::filter(team == "巨人" & 守備 == "外野手") %>%
+  dplyr::mutate(OPS2 = (OPS - 0.73) * 打席数) %>% 
+  dplyr::arrange(desc(打席数)) %>% 
+  head(5L) %>% 
+  knitr::kable()
+```
+
+広島の外野手
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::filter(team == "広島" & 守備 == "外野手") %>%
+  dplyr::mutate(OPS2 = (OPS - 0.73) * 打席数) %>% 
+  dplyr::arrange(desc(打席数)) %>% 
+  head(5L) %>% 
+  knitr::kable()
+```
+
+巨人は亀井の-10.142が丸の207.156になると仮定して+217.298  
+広島は丸の207.156がバティスタの37.448になると仮定して-169.708
+```{r}
+df %>% 
+  dplyr::filter(year == 2018) %>% 
+  dplyr::mutate(x = (OPS - 0.73) * 打席数) %>% 
+  dplyr::group_by(team) %>%
+  dplyr::summarise(OPS2 = sum(x, na.rm = TRUE)) -> ret
+
+ret[7,2] <- ret[7,2] + 217.298
+ret[8,2] <- ret[8,2] - 169.708
+
+ret %>% 
+  transform(team = factor(team, levels = c("広島", "ヤクルト", "巨人", "横浜", "中日", "阪神", "西武", "ソフトバンク", "日ハム", "オリックス", "ロッテ", "楽天"))) %>% 
+  ggplot(aes(x = team, y = OPS2, fill = team)) + 
+  geom_bar(stat = "identity") + 
+  #coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_manual(
+    values = c("#FF2B06",#広島
+               "#00AB5C",#ヤクルト
+               "#F97709",#巨人
+               "#0055A5",#横浜
+               "#002569",#中日
+               "#FFE201",#阪神
+               "#1F366A",#西武
+               "#F5C700",#ソフトバンク
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#221815",#ロッテ
+               "#860010"#楽天
+    )
+  )
+```
+
+
+
+
+
+
+
+
+
+

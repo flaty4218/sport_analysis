@@ -1,0 +1,88 @@
+---
+title: "20181201_TennisAnalysis_ETL"
+output:
+    html_document:
+    number_sections: true
+    fig_caption: true
+    toc: true
+    md_extensions: -ascii_identifiers
+    code_folding: hide
+    #toc_float: true
+    theme: lumen
+    highlight: pygments
+---
+
+# Introduction
+
+こちらのデータ(https://www.kaggle.com/m3financial/atp-tennis-data-from-201201-to-201707)を分析しやすい形にETLした
+
+# Preparation {.tabset .tabset-fade .tabset-pills}
+
+## Load Libraries
+```{r}
+library(tidyverse)
+```
+
+## Read Data
+データはこちらからダウンロードした(https://www.kaggle.com/m3financial/atp-tennis-data-from-201201-to-201707)
+```{r}
+df <- readr::read_csv("ATP Dataset_2012-01 to 2017-07_Int_V4.csv")
+```
+
+## Data Check
+```{r}
+df %>% str()
+```
+
+```{r}
+df %>% summary()
+```
+
+# ETL
+
+カラムの意味が不明 or 明らかに使わないものは削除
+```{r}
+df %>% 
+  dplyr::select(Date, Tournament, Series, Surface, Round, Winner, Player1, Player1_Rank, Player2, Player2_Rank) -> df
+```
+
+Player1, Player2はわかりにくいので、Winner, Loserにする
+```{r}
+df %>% 
+  dplyr::mutate(Loser = ifelse(Player1 == Winner, Player2, Player1)) %>% 
+  dplyr::mutate(Winner_Rank = ifelse(Winner == Player1, Player1_Rank, Player2_Rank)) %>% dplyr::mutate(Loser_Rank = ifelse(Loser == Player1, Player1_Rank, Player2_Rank)) %>% dplyr::select(-Player1, -Player2, -Player1_Rank, -Player2_Rank) -> df
+```
+
+
+なぜかDolgopolovの世界ランクが7380になってるレコードがあるので、そこだけNAに置換する
+```{r}
+df$Loser_Rank %>% 
+  stringr::str_replace(pattern = "7380", replacement = "N/A") -> df$Loser_Rank
+```
+
+Loser_Rankを数値型に変換
+```{r}
+df$Loser_Rank <- as.character(df$Loser_Rank) %>% as.numeric() 
+```
+
+Dateをわかりやすいようにas.Date()で変換
+```{r}
+df$Date <- as.Date(df$Date, origin="1900-01-01")
+```
+
+SeriesのMastersをMasters1000に置換  
+また、MastersCupをTourFinalに置換
+```{r}
+df$Series %>% 
+  replace(which(df$Series == "Masters"), "Masters1000") %>% 
+  replace(which(df$Series == "MastersCup"), "TourFinal") -> df$Series
+  #stringr::str_replace_all(pattern = "Masters", replacement = "Masters1000") %>%
+  #stringr::str_replace_all(pattern = "MastersCup", replacement = "TourFinal") -> df$Series
+```
+
+# Write csv file
+
+csvファイルとして書き出す
+```{r}
+df %>% readr::write_csv("tennis.csv")
+```

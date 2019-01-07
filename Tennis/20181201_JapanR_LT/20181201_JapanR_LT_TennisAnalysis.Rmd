@@ -1,0 +1,651 @@
+---
+title: "20181201_JapanR_LT_TennisAnalysis"
+output:
+  html_document:
+    toc: true
+    #number_sections: true
+    fig_caption: true
+    md_extensions: -ascii_identifiers
+    code_folding: hide
+    toc_float: true
+    theme: lumen
+    highlight: tango
+---
+
+# Introduction
+
+
+
+# Preparation {.tabset .tabset-fade .tabset-pills}
+
+分析をはじめる前準備
+
+## Load Libraries
+```{r, message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(plotly)#Visualization
+library(gghighlight)#Visualization
+library(patchwork)#Visualization
+library(PlayerRatings)#Rating
+```
+
+## Read Data
+```{r, message=FALSE, warning=FALSE}
+df <- readr::read_csv("tennis.csv")
+```
+
+# Data Check {.tabset .tabset-fade .tabset-pills}
+
+## glimpse
+
+1つのレコードに1試合の情報がある  
+各カラムの意味は以下の通り、  
+Date: 試合のあった日  
+Tournament: 大会名  
+Series: 大会のランク  
+Surface: コートのタイプ  
+Round: 何回戦かのデータ  
+Winner: 試合の勝者  
+Loser: 試合の敗者  
+Winner_Rank: 勝者の世界ランク  
+Loser_Rank: 敗者の世界ランク  
+```{r}
+df %>% glimpse()
+```
+
+## Summary
+
+データの期間は2012/01/03~2017/07/18の約5年半分  
+世界ランクの情報に少し欠損(NAがある様子)
+```{r}
+df %>% summary()
+```
+
+
+# EDA {.tabset .tabset-fade .tabset-pills}
+
+データを色々な視点で可視化していく
+
+## 月の試合数
+12月はオフシーズンなので試合なし、11月も少ない
+```{r}
+ret <- df
+ret$Date <- lubridate::floor_date(ret$Date, unit = "month")
+
+ret %>%
+  dplyr::select(Date) %>% 
+  dplyr::group_by(Date) %>% 
+  dplyr::summarise(count_month = n()) %>% 
+  ggplot(aes(x = Date, y = count_month)) +
+  geom_bar(stat = "identity") -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## Seriesの割合
+GrandSlamは年間4大会しかないが、Draw128と規模が多いので試合数も多くなっている
+```{r}
+df %>% 
+  dplyr::select(Series) %>% 
+  dplyr::group_by(Series) %>% 
+  dplyr::summarise(count = n()) %>% 
+  ggplot(aes(x = Series, y = count, fill = Series)) +
+  geom_bar(stat = "identity") -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## Surfaceの割合
+ハードコートが半分以上、芝は少ない
+```{r}
+df %>% 
+  dplyr::select(Surface) %>% 
+  dplyr::group_by(Surface) %>% 
+  dplyr::summarise(count = n()) %>% 
+  ggplot(aes(x = Surface, y = count, fill = Surface)) +
+  geom_bar(stat = "identity") -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## 勝利数Top10(2016年)
+
+2016年はマレーとジョコビッチの2強  
+錦織、ティーム、ラオニッチもいい感じ
+```{r}
+df %>% 
+  dplyr::filter(Date >= as.Date("2016-01-01") & Date < as.Date("2017-01-01")) %>%
+  dplyr::select(Winner, Loser) %>% 
+  dplyr::rename(win = Winner, lose = Loser) %>%
+  tidyr::gather(key = result, value = player, win, lose) %>% 
+  dplyr::group_by(player, result) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(key = result, value = count) %>% 
+  dplyr::arrange(desc(win)) %>% 
+  head(10L) %>% 
+  dplyr::select(player, win, lose) %>%
+  knitr::kable()
+```
+
+## 勝率Top10(2016年)
+
+やはりマレーとジョコビッチの強さが際立っている  
+フェデラーとバティスタは勝率は高いが試合数は少ない
+```{r}
+df %>% 
+  dplyr::filter(Date >= as.Date("2016-01-01") & Date < as.Date("2017-01-01")) %>%
+  dplyr::select(Winner, Loser) %>% 
+  dplyr::rename(win = Winner, lose = Loser) %>%
+  tidyr::gather(key = result, value = player, win, lose) %>% 
+  dplyr::group_by(player, result) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(key = result, value = count) %>% 
+  dplyr::mutate(win_rate = round(win/(win+lose)*100, 1)) %>% 
+  dplyr::arrange(desc(win_rate)) %>% 
+  head(10L) %>% 
+  dplyr::select(player, win, lose, win_rate) %>%
+  knitr::kable()
+```
+
+## BIG4+錦織+A.ズべレフの年間成績の推移
+
+ジョコビッチの安定感が半端ない  
+ズべレフは順調に伸びてきてる
+```{r, warning=FALSE}
+df %>% 
+  dplyr::mutate(year = year(Date)) %>% 
+  dplyr::filter(year != 2017) %>%
+  dplyr::select(Winner, Loser, year) %>% 
+  dplyr::rename(win = Winner, lose = Loser) %>%
+  tidyr::gather(key = result, value = player, win, lose) %>% 
+  dplyr::group_by(player, result, year) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(key = result, value = count) %>% 
+  dplyr::mutate(win_rate = round(win/(win+lose)*100, 1)) %>% 
+  dplyr::filter(player %in% c("MurrayA.", "DjokovicN.", "FedererR.", "NadalR.", "NishikoriK.", "ZverevA.")) -> ret
+
+ret %>% 
+  ggplot(aes(x = year, y = win, colour = player)) +
+  geom_line() + 
+  geom_point() -> p1
+
+ret %>% 
+  ggplot(aes(x = year, y = win_rate, colour = player)) +
+  geom_line() + 
+  geom_point() -> p2
+
+p1 / p2
+#plot(p)
+#ggplotly(p)
+```
+
+## BIG4+錦織+A.ズべレフの年間成績の推移(クレーコートver)
+
+クレーだとナダルが突出しているのがわかる  
+特に2013年はクレーシーズンにおいて、モンテカルロ決勝でジョコビッチに敗れた以外は、バルセロナ、マドリード、ローマ、全仏と全勝したという化け物な成績...  
+また、フェデラーがクレーを得意としていないこともなんとなくわかる
+```{r, warning=FALSE}
+df %>% 
+  dplyr::mutate(year = year(Date)) %>% 
+  dplyr::filter(year != 2017) %>%
+  dplyr::filter(Surface == "Clay") %>%
+  dplyr::select(Winner, Loser, year) %>% 
+  dplyr::rename(win = Winner, lose = Loser) %>%
+  tidyr::gather(key = result, value = player, win, lose) %>% 
+  dplyr::group_by(player, result, year) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(key = result, value = count) %>% 
+  dplyr::mutate(win_rate = round(win/(win+lose)*100, 1)) %>% 
+  dplyr::filter(player %in% c("MurrayA.", "DjokovicN.", "FedererR.", "NadalR.", "NishikoriK.", "ZverevA.")) -> ret
+
+ret %>% 
+  ggplot(aes(x = year, y = win, colour = player)) +
+  geom_line() + 
+  geom_point() -> p1
+
+ret %>% 
+  ggplot(aes(x = year, y = win_rate, colour = player)) +
+  geom_line() + 
+  geom_point() -> p2
+
+p1 / p2
+#plot(p)
+#ggplotly(p)
+```
+
+# Rating {.tabset .tabset-fade .tabset-pills}
+
+今回の本題のレーティングの話  
+EloとGlickoの2種類のレーティングを扱ってみる
+
+## use PlayerRating package
+
+elo関数を使って、レーティングの推移をtibble型として得るコード
+```{r}
+#elo()にはtimeを数値で渡す必要があるので変換
+ret <- df
+ret$Date <- as.numeric(ret$Date)
+
+#elo()
+ret %>% 
+  dplyr::select(Date, Winner, Loser) %>% 
+  dplyr::mutate(x = 1) %>% 
+  elo(history = TRUE)-> ret
+
+#elo()の結果からhistoryを取り出してdataframeにする
+ret[["history"]] %>% 
+  tibble::as_data_frame() %>%
+  t() %>% 
+  tibble::as_data_frame() -> ret 
+
+#レーティングの変化を知りたい10選手を取り出す
+ret$DjokovicN. %>%
+  head(1577L) -> DjokovicN.
+
+ret$FedererR. %>%
+  head(1577L) -> FedererR.
+
+ret$NadalR. %>%
+  head(1577L) -> NadalR.
+
+ret$MurrayA. %>%
+  head(1577L) -> MurrayA.
+
+ret$WawrinkaS. %>%
+  head(1577L) -> WawrinkaS.
+
+ret$NishikoriK. %>%
+  head(1577L) -> NishikoriK.
+
+ret$DelPotroJ.M. %>%
+  head(1577L) -> DelPotroJ.M.
+
+ret$CilicM. %>%
+  head(1577L) -> CilicM.
+
+ret$ThiemD. %>%
+  head(1577L) -> ThiemD.
+
+ret$ZverevA. %>%
+  head(1577L) -> ZverevA.
+
+#timestamp
+df$Date %>% 
+  unique() %>%
+  sort() -> Date
+
+#bind -> tibble&tidy化
+elo <- cbind(Date, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.) %>%
+  tibble::as.tibble() %>% 
+  tidyr::gather(key = player, value = elo_score, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.)
+
+#Date型へ変換
+elo$Date <- as.Date(elo$Date, origin = "1970-01-01")
+```
+
+glicko関数を使って、レーティングの推移をtibble型として得るコード
+```{r}
+#elo()にはtimeを数値で渡す必要があるので変換
+ret <- df
+ret$Date <- as.numeric(ret$Date)
+
+#elo()
+ret %>% 
+  dplyr::select(Date, Winner, Loser) %>% 
+  dplyr::mutate(x = 1) %>% 
+  glicko(history = TRUE)-> ret
+
+#elo()の結果からhistoryを取り出してdataframeにする
+ret[["history"]] %>% 
+  tibble::as_data_frame() %>%
+  t() %>% 
+  tibble::as_data_frame() -> ret 
+
+#レーティングの変化を知りたい10選手を取り出す
+ret$DjokovicN. %>%
+  head(1577L) -> DjokovicN.
+
+ret$FedererR. %>%
+  head(1577L) -> FedererR.
+
+ret$NadalR. %>%
+  head(1577L) -> NadalR.
+
+ret$MurrayA. %>%
+  head(1577L) -> MurrayA.
+
+ret$WawrinkaS. %>%
+  head(1577L) -> WawrinkaS.
+
+ret$NishikoriK. %>%
+  head(1577L) -> NishikoriK.
+
+ret$DelPotroJ.M. %>%
+  head(1577L) -> DelPotroJ.M.
+
+ret$CilicM. %>%
+  head(1577L) -> CilicM.
+
+ret$ThiemD. %>%
+  head(1577L) -> ThiemD.
+
+ret$ZverevA. %>%
+  head(1577L) -> ZverevA.
+
+#timestamp
+df$Date %>% 
+  unique() %>%
+  sort() -> Date
+
+#bind -> tibble&tidy化
+glicko <- cbind(Date, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.) %>%
+  tibble::as.tibble() %>% 
+  tidyr::gather(key = player, value = glicko_score, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.)
+
+#Date型へ変換
+glicko$Date <- as.Date(glicko$Date, origin = "1970-01-01")
+
+#レーティングの変化を知りたい10選手を取り出す
+ret$DjokovicN.[1578:3154] -> DjokovicN.
+
+ret$FedererR.[1578:3154] -> FedererR.
+
+ret$NadalR.[1578:3154] -> NadalR.
+
+ret$MurrayA.[1578:3154] -> MurrayA.
+
+ret$WawrinkaS.[1578:3154] -> WawrinkaS.
+
+ret$NishikoriK.[1578:3154] -> NishikoriK.
+
+ret$DelPotroJ.M.[1578:3154] -> DelPotroJ.M.
+
+ret$CilicM.[1578:3154] -> CilicM.
+
+ret$ThiemD.[1578:3154] -> ThiemD.
+
+ret$ZverevA.[1578:3154] -> ZverevA.
+
+#bind -> tibble&tidy化
+glicko2 <- cbind(Date, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.) %>%
+  tibble::as.tibble() %>% 
+  tidyr::gather(key = player, value = RD, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.)
+
+#Date型へ変換
+glicko2$Date <- as.Date(glicko2$Date, origin = "1970-01-01")
+
+glicko <- dplyr::inner_join(glicko, glicko2)
+```
+
+eloとglickoの結果をjoin
+```{r}
+rating <- dplyr::inner_join(elo, glicko)
+```
+
+## Visualize(Elo)
+
+10選手のレーティング推移  
+```{r}
+rating %>% 
+  ggplot(aes(x = Date, y = elo_score, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+BIG4+錦織のレーティング推移
+```{r}
+rating %>% 
+  dplyr::filter(player %in% c("DjokovicN.", "FedererR.", "NadalR.", "MurrayA.", "NishikoriK.")) %>%
+  ggplot(aes(x = Date, y = elo_score, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+2013年以降&錦織にhighlightしたグラフ
+```{r}
+rating %>% 
+  dplyr::filter(Date >= as.Date("2013-01-01")) %>%
+  ggplot(aes(x = Date, y = elo_score, colour = player)) +
+  geom_line() + 
+  gghighlight(player == "NishikoriK.") -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+さらに2014に絞る
+```{r}
+rating %>% 
+  dplyr::filter(Date >= as.Date("2014-01-01") & Date < as.Date("2015-01-01")) %>%
+  ggplot(aes(x = Date, y = elo_score, colour = player)) +
+  geom_line() + 
+  scale_y_continuous(limits = c(2100, 3000)) +
+  gghighlight(player == "NishikoriK.") -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## Visualize(Glicko)
+
+10選手のレーティング推移  
+```{r}
+rating %>% 
+  ggplot(aes(x = Date, y = glicko_score, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+BIG4+錦織のレーティング推移
+```{r}
+rating %>% 
+  dplyr::filter(player %in% c("DjokovicN.", "FedererR.", "NadalR.", "MurrayA.", "NishikoriK.")) %>%
+  ggplot(aes(x = Date, y = glicko_score, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## Elo Rating(Clay ver)
+
+elo関数を使って、レーティングの推移をtibble型として得るコード
+```{r}
+#elo()にはtimeを数値で渡す必要があるので変換
+ret <- df
+ret$Date <- as.numeric(ret$Date)
+
+#elo()
+ret %>% 
+  dplyr::filter(Surface == "Clay") %>%
+  dplyr::select(Date, Winner, Loser) %>% 
+  dplyr::mutate(x = 1) %>% 
+  elo(history = TRUE)-> ret
+
+#elo()の結果からhistoryを取り出してdataframeにする
+ret[["history"]] %>% 
+  tibble::as_data_frame() %>%
+  t() %>% 
+  tibble::as_data_frame() -> ret 
+
+#レーティングの変化を知りたい10選手を取り出す
+ret$DjokovicN. %>%
+  head(639L) -> DjokovicN.
+
+ret$FedererR. %>%
+  head(639L) -> FedererR.
+
+ret$NadalR. %>%
+  head(639L) -> NadalR.
+
+ret$MurrayA. %>%
+  head(639L) -> MurrayA.
+
+ret$WawrinkaS. %>%
+  head(639L) -> WawrinkaS.
+
+ret$NishikoriK. %>%
+  head(639L) -> NishikoriK.
+
+ret$DelPotroJ.M. %>%
+  head(639L) -> DelPotroJ.M.
+
+ret$CilicM. %>%
+  head(639L) -> CilicM.
+
+ret$ThiemD. %>%
+  head(639L) -> ThiemD.
+
+ret$ZverevA. %>%
+  head(639L) -> ZverevA.
+
+#timestamp
+df %>% 
+  dplyr::filter(Surface == "Clay") -> ret
+
+ret$Date %>% 
+  unique() %>%
+  sort() -> Date
+
+#bind -> tibble&tidy化
+elo <- cbind(Date, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.) %>%
+  tibble::as.tibble() %>% 
+  tidyr::gather(key = player, value = rating, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.)
+
+#Date型へ変換
+elo$Date <- as.Date(elo$Date, origin = "1970-01-01")
+```
+
+10選手のレーティング推移  
+```{r}
+elo %>% 
+  ggplot(aes(x = Date, y = rating, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+BIG4+錦織のレーティング推移
+```{r}
+elo %>% 
+  dplyr::filter(player %in% c("DjokovicN.", "FedererR.", "NadalR.", "MurrayA.", "NishikoriK.")) %>%
+  ggplot(aes(x = Date, y = rating, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+## Glicko Rating(Clay ver)
+
+glicko関数を使って、レーティングの推移をtibble型として得るコード
+```{r}
+#elo()にはtimeを数値で渡す必要があるので変換
+ret <- df
+ret$Date <- as.numeric(ret$Date)
+
+#elo()
+ret %>% 
+  dplyr::filter(Surface == "Clay") %>%
+  dplyr::select(Date, Winner, Loser) %>% 
+  dplyr::mutate(x = 1) %>% 
+  glicko(history = TRUE)-> ret
+
+#elo()の結果からhistoryを取り出してdataframeにする
+ret[["history"]] %>% 
+  tibble::as_data_frame() %>%
+  t() %>% 
+  tibble::as_data_frame() -> ret 
+
+#レーティングの変化を知りたい10選手を取り出す
+ret$DjokovicN. %>%
+  head(639L) -> DjokovicN.
+
+ret$FedererR. %>%
+  head(639L) -> FedererR.
+
+ret$NadalR. %>%
+  head(639L) -> NadalR.
+
+ret$MurrayA. %>%
+  head(639L) -> MurrayA.
+
+ret$WawrinkaS. %>%
+  head(639L) -> WawrinkaS.
+
+ret$NishikoriK. %>%
+  head(639L) -> NishikoriK.
+
+ret$DelPotroJ.M. %>%
+  head(639L) -> DelPotroJ.M.
+
+ret$CilicM. %>%
+  head(639L) -> CilicM.
+
+ret$ThiemD. %>%
+  head(639L) -> ThiemD.
+
+ret$ZverevA. %>%
+  head(639L) -> ZverevA.
+
+#timestamp
+df %>% 
+  dplyr::filter(Surface == "Clay") -> ret
+
+ret$Date %>% 
+  unique() %>%
+  sort() -> Date
+
+#bind -> tibble&tidy化
+glicko <- cbind(Date, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.) %>%
+  tibble::as.tibble() %>% 
+  tidyr::gather(key = player, value = rating, DjokovicN., FedererR., NadalR., MurrayA., WawrinkaS., NishikoriK., DelPotroJ.M., CilicM., ThiemD., ZverevA.)
+
+#Date型へ変換
+glicko$Date <- as.Date(glicko$Date, origin = "1970-01-01")
+```
+
+10選手のレーティング推移  
+```{r}
+glicko %>% 
+  ggplot(aes(x = Date, y = rating, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+BIG4+錦織のレーティング推移
+```{r}
+glicko %>% 
+  dplyr::filter(player %in% c("DjokovicN.", "FedererR.", "NadalR.", "MurrayA.", "NishikoriK.")) %>%
+  ggplot(aes(x = Date, y = rating, colour = player)) +
+  geom_line() -> p
+
+plot(p)
+#ggplotly(p)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
