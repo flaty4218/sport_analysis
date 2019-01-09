@@ -896,3 +896,112 @@ df %>%
   ylab("確率[%]") + 
   ggtitle(tmp)
 ```
+
+神戸製鋼と宗像は差がありすぎたので、適当なパラメータでも検証する
+```{r}
+t <- 80 #残り時間
+pa7 <- 3 / 80 #aチームの得点期待値
+pa5 <- 2 / 80 #aチームの得点期待値
+pa3 <- 1 / 80 #aチームの得点期待値
+pb7 <- 3 / 80 #bチームの得点期待値
+pb5 <- 1 / 80 #bチームの得点期待値
+pb3 <- 2 / 80 #bチームの得点期待値
+i <- 10000 #試行回数
+a <- 0 #現在のAチームの得点
+b <- 0 #現在のBチームの得点
+
+res <- matrix(0, nrow=i, ncol=1)
+
+for (n in 1:i) {
+  
+  res_a <- runif(t)
+  res_b <- runif(t)
+  
+  score_a <- a + 7 * sum(res_a < pa7) + 5 * sum(res_a >= p7 & res_a < (pa7+pa5)) + 3 * sum(res_a >= (pa7+pa5) & res_a < (pa7+pa5+pa3))
+  score_b <- b + 7 * sum(res_b < pb7) + 5 * sum(res_b >= p7 & res_b < (pb7+pb5)) + 3 * sum(res_b >= (pb7+pb5) & res_b < (pb7+pb5+pb3))
+  
+  if (score_a == score_b) { #引き分け
+   res[n, 1] <- "DRAW"
+ } else if (score_a > score_b) { #aの勝ち
+   res[n, 1] <- "WIN"
+ } else  #aの負け
+   res[n, 1] <- "LOSE"
+  
+}
+
+tmp <- paste0("a-b(", a, "-", b, ")残り時間", t, "分におけるaチームの勝率")
+
+res %>% 
+  as.data.frame() %>% 
+  dplyr::rename(result=V1) %>%
+  dplyr::group_by(result) %>% 
+  dplyr::summarise(rate = n() / i) %>% 
+  transform(result = factor(result, levels = c("WIN", "DRAW", "LOSE"))) %>%
+  ggplot(aes(x=result, y=rate, fill=result)) + 
+  geom_col() + 
+  geom_text(aes(label=round(rate, 3), vjust=-0.2)) + 
+  ggtitle(tmp)
+```
+
+```{r}
+time <- 79 #残り時間
+pa7 <- 3 / 80 #aチームの得点期待値
+pa5 <- 2 / 80 #aチームの得点期待値
+pa3 <- 1 / 80 #aチームの得点期待値
+pb7 <- 3 / 80 #bチームの得点期待値
+pb5 <- 1 / 80 #bチームの得点期待値
+pb3 <- 2 / 80 #bチームの得点期待値
+i <- 10000 #試行回数
+a <- 7 #現在のAチームの得点
+b <- 0 #現在のBチームの得点
+
+res <- matrix(0, nrow=i, ncol=1)
+
+df <- data.frame(matrix(rep(NA, 4), nrow=1))[numeric(0), ]
+colnames(df) <- c("DRAW", "LOSE", "WIN", "remaining_time")
+
+for (t in time:1) {
+  
+for (n in 1:i) {
+  
+  res_a <- runif(t)
+  res_b <- runif(t)
+  
+  score_a <- a + 7 * sum(res_a < pa7) + 5 * sum(res_a >= p7 & res_a < (pa7+pa5)) + 3 * sum(res_a >= (pa7+pa5) & res_a < (pa7+pa5+pa3))
+  score_b <- b + 7 * sum(res_b < pb7) + 5 * sum(res_b >= p7 & res_b < (pb7+pb5)) + 3 * sum(res_b >= (pb7+pb5) & res_b < (pb7+pb5+pb3))
+  
+  if (score_a == score_b) { #引き分け
+   res[n, 1] <- "DRAW"
+ } else if (score_a > score_b) { #aの勝ち
+   res[n, 1] <- "WIN"
+ } else  #aの負け
+   res[n, 1] <- "LOSE"
+  
+}
+  tmp <- 
+    res %>% 
+    as.data.frame() %>% 
+    dplyr::rename(result=V1) %>%
+    dplyr::group_by(result) %>% 
+    dplyr::summarise(rate = n() / i * 100) %>%
+    tidyr::spread(key = result, value = rate) %>% 
+    dplyr::mutate(remaining_time=t)
+  
+  df <- dplyr::bind_rows(df, tmp)
+    
+  res <- matrix(0, nrow=i, ncol=1)
+}
+
+tmp <- paste0("a-b(", a, "-", b, ")におけるaチームの勝率推移")
+
+df %>% 
+  tidyr::gather(key = result, value = rate, WIN, DRAW, LOSE) %>%
+  transform(result = factor(result, levels = c("LOSE", "DRAW", "WIN"))) %>%
+  ggplot(aes(x = remaining_time, y = rate, color = result)) +
+  geom_line(position="stack") + 
+  geom_ribbon(aes(ymin = 0, ymax = 1, group = result, fill = result), position = "stack", alpha = 0.7) +
+  scale_x_reverse() + 
+  xlab("残り時間[min]") +
+  ylab("確率[%]") + 
+  ggtitle(tmp)
+```
