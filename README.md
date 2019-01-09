@@ -9,4 +9,4 @@
 - Tennis analysis
 
 ## Soccer
-https://flaty4218.github.io/sport_analysis/
+https://flaty4218.github.io/sport_analysis//Simulation/realtimeWinRate.html
