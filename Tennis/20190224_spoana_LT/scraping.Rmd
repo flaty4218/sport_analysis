@@ -1,0 +1,58 @@
+---
+title: "Scraping for spoana LT"
+author: "y.hira"
+date: "2/16/2019"
+output: html_document
+---
+
+# Summary
+
+プロ野球のデータをスクレイピングしcsvファイルとして書き出す  
+スクレイピング対象のサイトはプロ野球データFreak(https://baseball-data.com/)  
+公式サイトよりデータがリッチだったのでこのサイトにした  
+
+# Library
+```{r}
+library(tidyverse)
+library(rvest)
+```
+
+# Web Scraping
+
+## service
+```{r}
+#-----Sevice-----
+
+#空のデータフレーム作成
+service <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
+name <- c("Player", "Percentage", "GamesWon", "TotalGames", "Matches", "year")
+names(service) <- name
+
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/service-games-won/", i, "/all/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "Player", "Percentage", "GamesWon", "TotalGames", "Matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i) %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  service <- dplyr::bind_rows(service, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+```
+
+
+# Data Check
