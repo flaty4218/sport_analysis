@@ -7,9 +7,9 @@ output: html_document
 
 # Summary
 
-プロ野球のデータをスクレイピングしcsvファイルとして書き出す  
-スクレイピング対象のサイトはプロ野球データFreak(https://baseball-data.com/)  
-公式サイトよりデータがリッチだったのでこのサイトにした  
+https://www.atptour.com/en  
+ATPの公式サイトからデータをスクレイピングする  
+細かい加工やJOINは別ファイル(ETL.Rmd)で行う
 
 # Library
 ```{r}
