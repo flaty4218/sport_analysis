@@ -62,7 +62,7 @@ merged <- dplyr::left_join(tmp, ranking)
 ちょっとカラムの順番が微妙なので修正
 ```{r}
 merged <- merged %>% 
-  dplyr::select(player, year, age, ranking, points, tourn_played, matches, percentage_service, percentage_return, games_won_service, games_total_service, games_won_return, games_total_return)
+  dplyr::select(player, year, age, ranking, points, tourn_played, matches, surface, percentage_service, percentage_return, games_won_service, games_total_service, games_won_return, games_total_return)
 ```
 
 # Write csv file
