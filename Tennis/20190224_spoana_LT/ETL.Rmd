@@ -1,0 +1,71 @@
+---
+title: "ETL & join files"
+author: "y.hira"
+date: "2/17/2019"
+output: html_document
+---
+
+# Description
+
+scraping.Rmdで作成したファイルのETLを行う  
+メインの分析はanalysis.Rmdで
+
+# Library
+```{r}
+library(tidyverse)
+```
+
+
+# Load Data
+```{r}
+service <- read_csv("service.csv")
+return <- read_csv("return.csv")
+ranking <- read_csv("ranking.csv")
+```
+
+# ETL
+%が邪魔なので削除してnumeric型に変換する  
+```{r}
+service$percentage_service <- service$percentage_service %>%  
+  stringr::str_replace_all(pattern="%", replacement="") %>% 
+  as.numeric()
+
+return$percentage_return <- return$percentage_return %>%  
+  stringr::str_replace_all(pattern="%", replacement="") %>% 
+  as.numeric()
+```
+
+# Data Check
+```{r}
+service %>% dplyr::glimpse()
+```
+
+```{r}
+return %>% dplyr::glimpse()
+```
+
+```{r}
+ranking %>% dplyr::glimpse()
+```
+
+# JOIN
+serviceとreturnをJOIN
+```{r}
+tmp <- dplyr::left_join(service, return)
+```
+
+さらにrankingをJOIN
+```{r}
+merged <- dplyr::left_join(tmp, ranking)
+```
+
+ちょっとカラムの順番が微妙なので修正
+```{r}
+merged <- merged %>% 
+  dplyr::select(player, year, age, ranking, points, tourn_played, matches, percentage_service, percentage_return, games_won_service, games_total_service, games_won_return, games_total_return)
+```
+
+# Write csv file
+```{r}
+merged %>% readr::write_csv("merged.csv")
+```
