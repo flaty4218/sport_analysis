@@ -21,11 +21,11 @@ library(rvest)
 
 ## service
 ```{r}
-#-----Sevice-----
+#-----All-----
 
 #空のデータフレーム作成
-service <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
-name <- c("player", "percentage_service", "games_won_service", "games_total_service", "matches", "year")
+service <- data.frame(matrix(rep(NA, 7), nrow=1))[numeric(0), ]
+name <- c("player", "percentage_service", "games_won_service", "games_total_service", "matches", "year", "surface")
 names(service) <- name
 
 for (i in 1991:2018) {
@@ -43,7 +43,85 @@ for (i in 1991:2018) {
   res <- res %>% 
     dplyr::select(-A, -B, -C, -D) %>% 
     na.omit() %>% 
-    dplyr::mutate(year = i) %>% 
+    dplyr::mutate(year = i, surface = "All") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  service <- dplyr::bind_rows(service, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Clay-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/service-games-won/", i, "/clay/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Clay") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  service <- dplyr::bind_rows(service, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Grass-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/service-games-won/", i, "/grass/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Grass") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  service <- dplyr::bind_rows(service, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Hard-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/service-games-won/", i, "/hard/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Hard") %>% 
     dplyr::mutate_all(funs(as.character))
   
   #bind
@@ -56,11 +134,11 @@ for (i in 1991:2018) {
 
 ## return
 ```{r}
-#-----return-----
+#-----All-----
 
 #空のデータフレーム作成
-return <- data.frame(matrix(rep(NA, 6), nrow=1))[numeric(0), ]
-name <- c("player", "percentage_return", "games_won_return", "games_total_return", "matches", "year")
+return <- data.frame(matrix(rep(NA, 7), nrow=1))[numeric(0), ]
+name <- c("player", "percentage_return", "games_won_return", "games_total_return", "matches", "year", "surface")
 names(return) <- name
 
 for (i in 1991:2018) {
@@ -78,7 +156,85 @@ for (i in 1991:2018) {
   res <- res %>% 
     dplyr::select(-A, -B, -C, -D) %>% 
     na.omit() %>% 
-    dplyr::mutate(year = i) %>% 
+    dplyr::mutate(year = i, surface = "All") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  return <- dplyr::bind_rows(return, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Clay-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/return-games-won/", i, "/clay/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Clay") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  return <- dplyr::bind_rows(return, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Grass-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/return-games-won/", i, "/grass/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Grass") %>% 
+    dplyr::mutate_all(funs(as.character))
+  
+  #bind
+  return <- dplyr::bind_rows(return, res)
+
+  #1ページ取得したら1sec停止
+  Sys.sleep(1)
+  }
+
+#-----Hard-----
+for (i in 1991:2018) {
+  
+  URL <- paste0("https://www.atptour.com/en/stats/return-games-won/", i, "/hard/all/")
+
+  res <- URL %>% 
+    read_html() %>% 
+    html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+    html_table(fill = TRUE)
+
+  name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+  names(res) <- name
+
+  res <- res %>% 
+    dplyr::select(-A, -B, -C, -D) %>% 
+    na.omit() %>% 
+    dplyr::mutate(year = i, surface = "Hard") %>% 
     dplyr::mutate_all(funs(as.character))
   
   #bind
