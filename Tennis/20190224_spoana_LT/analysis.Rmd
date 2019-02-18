@@ -26,6 +26,7 @@ library(viridis)
 library(gganimate)
 library(gifski)
 library(png)
+library(patchwork)
 ```
 
 ## Read Data
@@ -51,292 +52,104 @@ df %>% dplyr::glimpse()
 df %>% summary()
 ```
 
-## kable()*1991 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1991) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1992 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1992) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1993 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1993) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1994 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1994) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1995 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1995) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1996 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1996) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1997 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1997) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1998 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1998) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*1999 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 1999) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2000 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2000) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2001 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2001) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2002 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2002) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2003 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2003) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2004 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2004) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2005 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2005) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2006 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2006) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2007 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2007) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2008 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2008) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2009 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2009) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2010 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2010) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2011 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2011) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2012 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2012) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2013 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2013) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2014 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2014) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2015 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2015) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2016 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2016) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2017 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2017) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
-## kable()*2018 
-
-```{r}
-df %>% 
-  dplyr::filter(year == 2018) %>% 
-  dplyr::arrange(ranking) %>% 
-  kable() %>%
-  kable_styling()
-```
-
 # EDA {.tabset .tabset-fade .tabset-pills}
 
-## Top50 players
+## surface
+
+*Top50 players
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 50) %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "All") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]")-> p1
+
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p2
+
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p3
+
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p4
+
+(p1 + p2) / (p3 + p4)
+```
+
+*Top10 players
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "All") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]")-> p1
+
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p2
+
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p3
+
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]") -> p4
+
+(p1 + p2) / (p3 + p4)
+```
+
+## Top50 players(surface == "All")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "All") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
@@ -347,7 +160,7 @@ df %>%
 * animation
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 50) %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "All") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
@@ -359,10 +172,10 @@ df %>%
 #animate(a, fps=1)
 ```
 
-## Top10 players
+## Top10 players(surface == "All")
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 10) %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "All") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
@@ -373,7 +186,7 @@ df %>%
 * animation
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 10) %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "All") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
@@ -385,9 +198,159 @@ df %>%
 #animate(a, fps=1)
 ```
 
+## Top50 players(surface == "Clay")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
 
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
 
+#animate(a, fps=1)
+```
 
+## Top10 players(surface == "Clay")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
 
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
 
+#animate(a, fps=1)
+```
+
+## Top50 players(surface == "Grass")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
+
+#animate(a, fps=1)
+```
+
+## Top10 players(surface == "Grass")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
+
+#animate(a, fps=1)
+```
+
+## Top50 players(surface == "Hard")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
+
+#animate(a, fps=1)
+```
+
+## Top10 players(surface == "Hard")
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+* animation
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches > 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+# Here comes the gganimate specific bits
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) + 
+  ease_aes('linear') #-> a
+
+#animate(a, fps=1)
+```
 
