@@ -1,32 +1,39 @@
 ---
 title: "Analysis for spoana LT"
 author: "y.hira"
-date: "2/17/2019"
+date: "2019/02/23"
 output:
   html_document:
     toc: true
-    #number_sections: true
+    number_sections: false
     fig_caption: true
     md_extensions: -ascii_identifiers
     code_folding: hide
-    toc_float: true
+    toc_float: false
     theme: lumen
     highlight: tango
 ---
 
-# Introduction {.tabset .tabset-fade .tabset-pills}
+# Introduction
+
+- Sport Analyst Meetup LTの発表用分析.( [発表資料はこちら](https://docs.google.com/presentation/d/1WPO_Cc4fpXs3nGLzTvk8PTQlHBU-jswS6oJhu7Hi1f0/edit?usp=sharing))  
+- データは [男子プロテニスの公式サイト](https://www.atptour.com/)からスクレイピングで取得.
 
 # Preparation {.tabset .tabset-fade .tabset-pills}
 
+- ライブラリやデータの読み込み等
+
 ## Load Libraries
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(kableExtra)
 library(viridis)
+library(ggExtra)
+library(gghighlight)
+library(ggridges)
 library(gganimate)
 library(gifski)
 library(png)
-library(patchwork)
 ```
 
 ## Read Data
@@ -37,12 +44,30 @@ df <- readr::read_csv("merged.csv")
 ## Set Options
 ```{r}
 #ggplotの文字化け対策
-theme_set( theme_bw(base_family = "HiraKakuProN-W3"))
+theme_set(theme_bw(base_family = "HiraKakuProN-W3"))
 ```
 
 # Data Check {.tabset .tabset-fade .tabset-pills}
 
+- 今回のデータセットの確認
+
 ## glimpse()
+
+- player: 選手名  
+- year: 年  
+- age: 年齢  
+- ranking: 世界ランキング  
+- points: ランキングポイント  
+- tourn_played: 出場した大会数  
+- matches: 試合数  
+- surface: コートの種類(Allは全コート分)  
+- percentage_service: サービスゲームの獲得率(keep率)  
+- percentage_return: リターンゲームの獲得率(break率)  
+- games_won_service: 獲得したサービスゲーム数  
+- games_total_service: 全サービスゲーム数  
+- games_won_return: 獲得したリターンゲーム数  
+- games_total_return: 全リターンゲーム数  
+
 ```{r}
 df %>% dplyr::glimpse()
 ```
@@ -52,7 +77,20 @@ df %>% dplyr::glimpse()
 df %>% summary()
 ```
 
+## sample data
+
+- year == 2018 & surface == "All"のデータ  
+```{r}
+df %>%
+  dplyr::filter(year == 2018 & surface == "All") %>% 
+  dplyr::arrange(ranking) %>% 
+  kableExtra::kable() %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = F)
+```
+
 # Visualize {.tabset .tabset-fade .tabset-pills}
+
+- 色々な角度からデータを眺めてみる
 
 ## surfaceごとのkeep/break率の分布(Top50 players)
 
@@ -78,33 +116,291 @@ df %>%
   purrr::map(~ plot_tmp(.x))
 ```
 
-## Top50 players(surface == "All")
+* ggExtra::ggMarginal()でヒストグラムも一緒に  
+(purrr::map()がうまく動かなかったのでsurfaceごとにコード書いた...)  
+  
+* All
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 50 & matches > 5 & surface == "All") %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
   xlab("break[%]") +
-  ylab("keep[%]")
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
 ```
 
-* animation
+* Clay
 ```{r}
 df %>% 
-  dplyr::filter(ranking <= 50 & matches > 5 & surface == "All") %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "Clay") %>% 
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
-# Here comes the gganimate specific bits
-  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
-  transition_time(as.integer(year)) + 
-  ease_aes('linear') #-> a
-
-#animate(a, fps=1)
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
 ```
 
+* Grass
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
 
+* Hard
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
 
+* keep[%]の分布
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5) %>% 
+  ggplot(aes(x = percentage_service, y = as.factor(surface), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 1, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "keep[%]", option = "C") +
+  xlab("keep[%]") +
+  ylab("surface")
+```
+
+* break[%]の分布
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5) %>% 
+  ggplot(aes(x = percentage_return, y = as.factor(surface), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 1, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "break[%]", option = "C") +
+  xlab("break[%]") +
+  ylab("surface")
+```
+
+## surfaceごとのkeep/break率の分布(Top10 players)
+
+- 傾向はTop50 playersの場合と同じ.  
+- Clay, Grass, Hard(+All)コート毎における、Top50選手のkeep/break率の分布. 試合数が少ない場合、データのバラツキが多くなるので年間5試合以上でfilter.  
+- Clayはbreak率が高く、Grassはkeep率が高い傾向. HardはAllと同じような分布.  
+- 当たり前だが上位選手ほどkeep/break率共に高い.
+  
+```{r}
+plot_tmp <- function(data){
+  data %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlim(0, 55) +
+  ylim(55, 100) +
+  xlab("break[%]") +
+  ylab("keep[%]")
+}
+
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5) %>% 
+  split(.$surface) %>% 
+  purrr::map(~ plot_tmp(.x))
+```
+
+* ggExtra::ggMarginal()でヒストグラムも一緒に  
+(Top50と同様、purrr::map()がうまく動かなかったのでsurfaceごとにコード書いた...)  
+  
+* All
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5 & surface == "All") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
+
+* Clay
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5 & surface == "Clay") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
+
+* Grass
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5 & surface == "Grass") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
+
+* Hard
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5 & surface == "Hard") %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]") + 
+  theme(legend.position = "bottom") -> p
+  
+  p %>% ggExtra::ggMarginal(type = "histogram", fill = "blue")
+```
+
+## surfaceごとのkeep/break率の分布(BIG4 & Top10)
+
+- BIG4(Roger Federer, Rafael Nadal, Novak Djokovic, Andy Murray)についてkeep/break率を見てみる.  
+
+```{r}
+player_list <- c("Roger Federer", "Rafael Nadal", "Novak Djokovic", "Andy Murray" , "others(Top10)")
+color_list <- c("Roger Federer" = "#ffbb00", "Rafael Nadal" = "#fb6542", "Novak Djokovic" = "#375e97", "Andy Murray" = "#3f671c", "others(Top10)" = "gray80")
+
+plot_tmp <- function(data){
+  data %>% 
+  dplyr::mutate(player =  ifelse(player %in% player_list, player, "others(Top10)")) %>% 
+  transform(player = factor(player, levels = player_list)) %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=player, size=matches)) +
+  geom_point(alpha = 0.6) +
+  scale_color_manual(values = color_list) +
+  xlab("break[%]") +
+  ylab("keep[%]")
+}
+
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5) %>% 
+  split(.$surface) %>% 
+  purrr::map(~ plot_tmp(.x))
+```
+
+## surfaceごとのkeep/break率の分布(錦織圭)
+
+- 錦織選手についてもkeep/break率を見てみる.  
+- 2014~2016年はkeep/break率ともに高い.  
+- どちらかといえば右下(keep率は低いがbreak率が高い傾向)にいると思っていたがそうでもなかった.
+
+```{r}
+plot_tmp <- function(data){
+  data %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=year, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  gghighlight(player == "Kei Nishikori") +
+  xlab("break[%]") +
+  ylab("keep[%]")
+}
+
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5) %>% 
+  split(.$surface) %>% 
+  purrr::map(~ plot_tmp(.x))
+```
+
+## keep/break率の分布推移(Animation)
+
+- surface == Allにおけるkeep/break率分布の推移をanimationで確認  
+- なんとなく左上(サーブ優位傾向)に移動しているような気がする...  
+
+```{r}
+df %>%
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  labs(title = 'year: {frame_time}', x = 'break[%]', y = 'keep[%]') +
+  transition_time(as.integer(year)) +
+  ease_aes('linear')
+```
+
+## keep/break率の分布推移
+
+- 微妙な変化だが、徐々にサービス優位になってる様子 
+  
+* keep[%]
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>% 
+  ggplot(aes(x = percentage_service, y = as.factor(year), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.05) +
+  scale_fill_viridis(name = "keep[%]", option = "C") +
+  xlab("keep[%]") +
+  ylab("year") +
+  labs(title = 'keep percentage of Top50 players')
+```
+
+* break[%]
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>% 
+  ggplot(aes(x = percentage_return, y = as.factor(year), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.05) +
+  scale_fill_viridis(name = "break[%]", option = "C") +
+  xlab("break[%]") +
+  ylab("year") +
+  labs(title = 'break percentage of Top50 players')
+```
+
+## 年齢分布の推移
+
+- Top50、Top10ともに年齢が年々増加している. 特にTop10は顕著(というか顔ぶれ変わってない)  
+- 2018年はTop50における20代前半の選手の割合が増加.  
+- 2017年にTop10選手の顔ぶれが若返ったかに思えたが2018年は元に戻った模様.  
+  
+* Top50 players
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>% 
+  ggplot(aes(x = age, y = as.factor(year), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.05) +
+  scale_fill_viridis(name = "age", option = "C") +
+  xlab("age") +
+  ylab("year") +
+  labs(title = 'Age of Top50 players')
+```
+
+* Top10 players
+```{r}
+df %>% 
+  dplyr::filter(ranking <= 10 & matches >= 5 & surface == "All") %>% 
+  ggplot(aes(x = age, y = as.factor(year), fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.05) +
+  scale_fill_viridis(name = "age", option = "C") +
+  xlab("age") +
+  ylab("year") +
+  labs(title = 'Age of Top10 players')
+```
 
 
