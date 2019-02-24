@@ -17,7 +17,6 @@ output:
 # Introduction
 
 - Sport Analyst Meetup LTの発表用分析.( [発表資料はこちら](https://docs.google.com/presentation/d/1WPO_Cc4fpXs3nGLzTvk8PTQlHBU-jswS6oJhu7Hi1f0/edit?usp=sharing))  
-- データは [男子プロテニスの公式サイト](https://www.atptour.com/)からスクレイピングで取得.
 
 # Preparation {.tabset .tabset-fade .tabset-pills}
 
@@ -72,6 +71,13 @@ theme_set(theme_bw(base_family = "HiraKakuProN-W3"))
 df %>% dplyr::glimpse()
 ```
 
+```{r}
+df %>%
+  dplyr::filter(year == 2018 & surface == "All") %>% 
+  dplyr::arrange(ranking) %>% 
+  dplyr::glimpse()
+```
+
 ## summary()
 ```{r}
 df %>% summary()
@@ -104,8 +110,6 @@ plot_tmp <- function(data){
   ggplot(aes(x=percentage_return, y=percentage_service, color=ranking, size=matches)) +
   geom_point() +
   scale_color_viridis() +
-  xlim(0, 55) +
-  ylim(55, 100) +
   xlab("break[%]") +
   ylab("keep[%]")
 }
@@ -181,7 +185,7 @@ df %>%
   dplyr::filter(ranking <= 50 & matches >= 5) %>% 
   ggplot(aes(x = percentage_service, y = as.factor(surface), fill = ..x..)) +
   geom_density_ridges_gradient(scale = 1, rel_min_height = 0.01) +
-  scale_fill_viridis(name = "keep[%]", option = "C") +
+  scale_fill_viridis(name = "keep[%]") +
   xlab("keep[%]") +
   ylab("surface")
 ```
@@ -324,7 +328,7 @@ plot_tmp <- function(data){
 }
 
 df %>% 
-  dplyr::filter(ranking <= 50 & matches >= 5) %>% 
+  dplyr::filter((ranking <= 10 & matches >= 5) | player == "Kei Nishikori") %>% 
   split(.$surface) %>% 
   purrr::map(~ plot_tmp(.x))
 ```
@@ -355,7 +359,7 @@ df %>%
   dplyr::filter(ranking <= 50 & matches >= 5 & surface == "All") %>% 
   ggplot(aes(x = percentage_service, y = as.factor(year), fill = ..x..)) +
   geom_density_ridges_gradient(scale = 3, rel_min_height = 0.05) +
-  scale_fill_viridis(name = "keep[%]", option = "C") +
+  scale_fill_viridis(name = "keep[%]") +
   xlab("keep[%]") +
   ylab("year") +
   labs(title = 'keep percentage of Top50 players')
