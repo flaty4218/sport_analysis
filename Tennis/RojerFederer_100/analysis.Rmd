@@ -1,0 +1,259 @@
+---
+title: "Analysis for spoana LT"
+author: "y.hira"
+date: "2019/03/10"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+    fig_caption: true
+    md_extensions: -ascii_identifiers
+    code_folding: hide
+    toc_float: false
+    theme: lumen
+    highlight: tango
+---
+
+# Introduction
+
+- キャリア全体のkeep/break率の分析(Reger Federer 100 title記念)   
+
+# Preparation {.tabset .tabset-fade .tabset-pills}
+
+- ライブラリやデータの読み込み等
+
+## Load Libraries
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(DT)
+library(viridis) # color pallet
+library(ggExtra)
+library(gghighlight) #highlight
+library(ggridges) #joy plot
+```
+
+## Read Data
+```{r}
+df <- readr::read_csv("tennis_career.csv")
+```
+
+## Set Options
+```{r}
+#ggplotの文字化け対策
+theme_set(theme_bw(base_family = "HiraKakuProN-W3"))
+```
+
+# Data Check {.tabset .tabset-fade .tabset-pills}
+
+- 今回のデータセットの確認
+
+## glimpse()
+
+- player: 選手名    
+- percentage_service: サービスゲームの獲得率(keep率)  
+- percentage_return: リターンゲームの獲得率(break率)  
+- games_won_service: 獲得したサービスゲーム数  
+- matches: 試合数  
+- surface: コートの種類(Allは全コート分)  
+- games_total_service: 全サービスゲーム数  
+- games_won_return: 獲得したリターンゲーム数  
+- games_total_return: 全リターンゲーム数  
+
+```{r}
+df %>% dplyr::glimpse()
+```
+
+## summary()
+```{r}
+df %>% summary()
+```
+
+## sample data
+
+- surface == "All"のデータ  
+```{r}
+df %>%
+  dplyr::filter(surface == "All") %>% 
+  dplyr::arrange(desc(matches)) %>% 
+  DT::datatable()
+```
+
+# Visualize {.tabset .tabset-fade .tabset-pills}
+
+- 色々な角度からデータを眺めてみる
+
+## keep/break率の分布(surface == "All")
+
+keep/break率のどちらも200位にランクインしている選手で散布図を作成  
+(正直、この図に名前が入っているだけですごい選手...)
+  
+```{r}
+df %>% 
+  dplyr::filter(surface == "All") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+player_list <- c("Roger Federer", "Rafael Nadal", "Novak Djokovic", "Andy Murray" , "others")
+color_list <- c("Roger Federer" = "#ffbb00", "Rafael Nadal" = "#fb6542", "Novak Djokovic" = "#375e97", "Andy Murray" = "#3f671c", "others" = "gray80")
+
+df %>% 
+  dplyr::filter(surface == "All") %>% 
+  na.omit() %>%
+  dplyr::mutate(player =  ifelse(player %in% player_list, player, "others")) %>% 
+  transform(player = factor(player, levels = player_list)) %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=player, size=matches)) +
+  geom_point(alpha = 0.6) +
+  scale_color_manual(values = color_list) +
+  #scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+df %>% 
+  dplyr::filter(surface == "All") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  gghighlight(player == "Kei Nishikori") +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+## keep/break率の分布(surface == "Clay")
+
+keep/break率のどちらも200位にランクインしている選手で散布図を作成  
+(正直、この図に名前が入っているだけですごい選手...)
+  
+```{r}
+df %>% 
+  dplyr::filter(surface == "Clay") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+player_list <- c("Roger Federer", "Rafael Nadal", "Novak Djokovic", "Andy Murray" , "others")
+color_list <- c("Roger Federer" = "#ffbb00", "Rafael Nadal" = "#fb6542", "Novak Djokovic" = "#375e97", "Andy Murray" = "#3f671c", "others" = "gray80")
+
+df %>% 
+  dplyr::filter(surface == "Clay") %>% 
+  na.omit() %>%
+  dplyr::mutate(player =  ifelse(player %in% player_list, player, "others")) %>% 
+  transform(player = factor(player, levels = player_list)) %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=player, size=matches)) +
+  geom_point(alpha = 0.6) +
+  scale_color_manual(values = color_list) +
+  #scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+df %>% 
+  dplyr::filter(surface == "Clay") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  gghighlight(player == "Kei Nishikori") +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+## keep/break率の分布(surface == "Grass")
+
+keep/break率のどちらも200位にランクインしている選手で散布図を作成  
+(正直、この図に名前が入っているだけですごい選手...)
+  
+```{r}
+df %>% 
+  dplyr::filter(surface == "Grass") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+player_list <- c("Roger Federer", "Rafael Nadal", "Novak Djokovic", "Andy Murray" , "others")
+color_list <- c("Roger Federer" = "#ffbb00", "Rafael Nadal" = "#fb6542", "Novak Djokovic" = "#375e97", "Andy Murray" = "#3f671c", "others" = "gray80")
+
+df %>% 
+  dplyr::filter(surface == "Grass") %>% 
+  na.omit() %>%
+  dplyr::mutate(player =  ifelse(player %in% player_list, player, "others")) %>% 
+  transform(player = factor(player, levels = player_list)) %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=player, size=matches)) +
+  geom_point(alpha = 0.6) +
+  scale_color_manual(values = color_list) +
+  #scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+df %>% 
+  dplyr::filter(surface == "Grass") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  gghighlight(player == "Kei Nishikori") +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+## keep/break率の分布(surface == "Hard")
+
+keep/break率のどちらも200位にランクインしている選手で散布図を作成  
+(正直、この図に名前が入っているだけですごい選手...)
+  
+```{r}
+df %>% 
+  dplyr::filter(surface == "Hard") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+player_list <- c("Roger Federer", "Rafael Nadal", "Novak Djokovic", "Andy Murray" , "others")
+color_list <- c("Roger Federer" = "#ffbb00", "Rafael Nadal" = "#fb6542", "Novak Djokovic" = "#375e97", "Andy Murray" = "#3f671c", "others" = "gray80")
+
+df %>% 
+  dplyr::filter(surface == "Hard") %>% 
+  na.omit() %>%
+  dplyr::mutate(player =  ifelse(player %in% player_list, player, "others")) %>% 
+  transform(player = factor(player, levels = player_list)) %>% 
+  ggplot(aes(x=percentage_return, y=percentage_service, color=player, size=matches)) +
+  geom_point(alpha = 0.6) +
+  scale_color_manual(values = color_list) +
+  #scale_color_viridis() +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```
+
+```{r}
+df %>% 
+  dplyr::filter(surface == "Hard") %>% 
+  na.omit() %>%
+  ggplot(aes(x=percentage_return, y=percentage_service, size=matches)) +
+  geom_point() +
+  scale_color_viridis() +
+  gghighlight(player == "Kei Nishikori") +
+  xlab("break[%]") +
+  ylab("keep[%]")
+```

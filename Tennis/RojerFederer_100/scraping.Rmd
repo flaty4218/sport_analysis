@@ -1,0 +1,233 @@
+---
+title: "Scraping"
+author: "y.hira"
+date: "2019/03/03"
+output: html_document
+---
+
+# Description
+
+https://www.atptour.com/en  
+ATPの公式サイトからデータをスクレイピングする  
+細かい加工やJOINは別ファイル(ETL.Rmd)で行う
+
+# Library
+```{r}
+library(tidyverse)
+library(rvest)
+```
+
+# Web Scraping
+
+通算200試合以上でのkeep率top200
+
+## service
+```{r}
+#-----All-----
+URL <- paste0("https://www.atptour.com/en/stats/service-games-won/all/all/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "All") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+service <- res
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+
+#-----Clay-----
+URL <- paste0("https://www.atptour.com/en/stats/service-games-won/all/clay/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Clay") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+service <- dplyr::bind_rows(service, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+#-----Grass-----
+URL <- paste0("https://www.atptour.com/en/stats/service-games-won/all/grass/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Grass") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+service <- dplyr::bind_rows(service, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+#-----Hard-----
+URL <- paste0("https://www.atptour.com/en/stats/service-games-won/all/hard/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_service", "games_won_service", "games_total_service", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Hard") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+service <- dplyr::bind_rows(service, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+```
+
+## return
+
+通算200試合以上でのkeep率top200
+
+```{r}
+#-----All-----
+URL <- paste0("https://www.atptour.com/en/stats/return-games-won/all/all/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "All") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+return <- res
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+
+#-----Clay-----
+URL <- paste0("https://www.atptour.com/en/stats/return-games-won/all/clay/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Clay") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+return <- dplyr::bind_rows(return, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+#-----Grass-----
+URL <- paste0("https://www.atptour.com/en/stats/return-games-won/all/grass/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Grass") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+return <- dplyr::bind_rows(return, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+
+#-----Hard-----
+URL <- paste0("https://www.atptour.com/en/stats/return-games-won/all/hard/all/")
+
+res <- URL %>% 
+  read_html() %>% 
+  html_node(xpath = '//*[@id="statsListingTableContent"]/table') %>% 
+  html_table(fill = TRUE)
+
+name <- c("A", "B", "C", "D", "player", "percentage_return", "games_won_return", "games_total_return", "matches")
+names(res) <- name
+
+res <- res %>% 
+  dplyr::select(-A, -B, -C, -D) %>% 
+  na.omit() %>% 
+  dplyr::mutate(surface = "Hard") %>% 
+  dplyr::mutate_all(funs(as.character))
+
+#bind
+return <- dplyr::bind_rows(return, res)
+
+#1ページ取得したら1sec停止
+Sys.sleep(1)
+```
+
+## Join
+
+```{r}
+tennis_career <- dplyr::inner_join(service, return)
+```
+
+## ETL
+
+```{r}
+tennis_career$percentage_service <- tennis_career$percentage_service %>% str_replace_all("%", "")
+tennis_career$percentage_return <- tennis_career$percentage_return %>% str_replace_all("%", "")
+```
+
+# Write csv file
+```{r}
+tennis_career %>% readr::write_csv("tennis_career.csv")
+```
