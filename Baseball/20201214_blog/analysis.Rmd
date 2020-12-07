@@ -1,0 +1,199 @@
+---
+title: "ピタゴラス勝率"
+author: "flaty"
+date: '`r format(Sys.time(), "%y/%m/%d %H:%M")`'
+output:
+  html_document:
+    #number_sections: true
+    #fig_caption: true
+    toc: true
+    md_extensions: -ascii_identifiers
+    #code_folding: hide
+    #toc_float: true
+    theme: lumen
+    highlight: pygments
+---
+
+# Preparation {.tabset .tabset-fade .tabset-pills}
+
+## Load Library
+```{r, message=FALSE}
+library(tidyverse)
+library(DT)
+```
+
+## Load Data
+```{r, message=FALSE}
+df <- read_csv("NPB_ranking.csv")
+```
+
+## Data Processing
+```{r}
+#勝率、ピタゴラス勝率とその差分を追加
+#期間中に名前が変わっているチーム名を揃える
+df <- df %>% 
+  mutate(
+    勝率 = round(勝利 / (勝利 + 敗北), digits = 4),
+    ピタゴラス勝率 = round(得点^2 / (得点^2 + 失点^2), digits = 4),
+    差分 = round(勝率 - ピタゴラス勝率, digits = 4),
+    チーム = ifelse(チーム == "ヤクルトスワローズ", "東京ヤクルトスワローズ",
+                    ifelse(チーム == "西武ライオンズ", "埼玉西武ライオンズ",
+                              ifelse(チーム == "横浜ベイスターズ", "横浜DeNAベイスターズ", チーム)
+                              )
+                    )
+  ) %>% 
+  transform(チーム = factor(チーム, levels = c("福岡ソフトバンクホークス", "千葉ロッテマリーンズ", "埼玉西武ライオンズ", "東北楽天ゴールデンイーグルス", "北海道日本ハムファイターズ", "オリックス・バファローズ", "読売ジャイアンツ", "阪神タイガース", "中日ドラゴンズ", "横浜DeNAベイスターズ", "広島東洋カープ", "東京ヤクルトスワローズ")))
+```
+
+
+## Set Option
+```{r}
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+
+# Analysis {.tabset .tabset-fade .tabset-pills}
+
+## 実際の勝率とピタゴラス勝率の関係
+
+### scatter_plot
+```{r}
+df %>% 
+  ggplot(aes(x = ピタゴラス勝率, y = 勝率)) +
+  geom_point() +
+  stat_function(color = "blue",
+                fun = function(x) x) +
+  xlim(0.25, 0.75) +
+  ylim(0.25, 0.75) +
+  theme_gray(base_family = "HiraKakuPro-W3")
+```
+
+```{r}
+df %>% 
+  ggplot(aes(x = ピタゴラス勝率, y = 勝率, color = チーム)) +
+  geom_point() +
+  stat_function(color = "blue",
+                fun = function(x) x) +
+  facet_wrap(チーム ~ .) +
+  xlim(0.25, 0.75) +
+  ylim(0.25, 0.75) +
+  theme_gray(base_family = "HiraKakuPro-W3") +
+  theme(legend.position = 'none') +
+  scale_color_manual(
+    values = c("#F5C700",#ソフトバンク
+               "#221815",#ロッテ
+               "#1F366A",#西武
+               "#860010",#楽天
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#F97709",#巨人
+               "#FFE201",#阪神
+               "#002569",#中日
+               "#0055A5",#横浜
+               "#FF2B06",#広島
+               "#00AB5C"#ヤクルト
+    )
+  )
+```
+
+### histgram
+
+```{r}
+df %>% 
+  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
+  ggplot(aes(x = 差分)) +
+  geom_histogram(binwidth = 0.01) +
+  geom_vline(aes(xintercept=0), color="red", linetype="dashed") +
+  theme_gray(base_family = "HiraKakuPro-W3")
+```
+
+```{r}
+df %>% 
+  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
+  ggplot(aes(x = 差分, fill = チーム)) +
+  geom_histogram(binwidth = 0.01) +
+  geom_vline(aes(xintercept=0), color="red", linetype="dashed") +
+  facet_wrap(チーム ~ .) +
+  theme_gray(base_family = "HiraKakuPro-W3") +
+  theme(legend.position = 'none') +
+  scale_fill_manual(
+    values = c("#F5C700",#ソフトバンク
+               "#221815",#ロッテ
+               "#1F366A",#西武
+               "#860010",#楽天
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#F97709",#巨人
+               "#FFE201",#阪神
+               "#002569",#中日
+               "#0055A5",#横浜
+               "#FF2B06",#広島
+               "#00AB5C"#ヤクルト
+    )
+  )
+```
+
+### timeseries_plot
+```{r}
+df %>% 
+  pivot_longer(勝率:ピタゴラス勝率, names_to = "label") %>% 
+  ggplot(aes(x = 年, y = value, color = label)) +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept=0.5, color="red", linetype="dashed") +
+  ylim(0.25, 0.75) +
+  facet_wrap(チーム ~ .) +
+  theme_gray(base_family = "HiraKakuPro-W3") +
+  theme(legend.position = 'bottom')
+```
+
+```{r}
+df %>% 
+  ggplot(aes(x = 年, y = 差分, color = チーム)) +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept=0, color="red", linetype="dashed") +
+  #ylim(0.25, 0.75) +
+  facet_wrap(チーム ~ .) +
+  theme_gray(base_family = "HiraKakuPro-W3") +
+  theme(legend.position = 'none') +
+  scale_color_manual(
+    values = c("#F5C700",#ソフトバンク
+               "#221815",#ロッテ
+               "#1F366A",#西武
+               "#860010",#楽天
+               "#4C7B98",#日ハム
+               "#000019",#オリックス
+               "#F97709",#巨人
+               "#FFE201",#阪神
+               "#002569",#中日
+               "#0055A5",#横浜
+               "#FF2B06",#広島
+               "#00AB5C"#ヤクルト
+    )
+  )
+```
+
+
+## 実際の勝率とピタゴラス勝率の差が大きいチーム
+
+### プラス方向
+```{r}
+df %>% 
+  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
+  arrange(desc(差分)) %>% 
+  DT::datatable()
+```
+
+### マイナス方向
+```{r}
+df %>% 
+  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
+  arrange(差分) %>% 
+  DT::datatable()
+```
+
+
