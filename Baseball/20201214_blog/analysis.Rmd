@@ -20,6 +20,7 @@ output:
 ```{r, message=FALSE}
 library(tidyverse)
 library(DT)
+library(kableExtra)
 ```
 
 ## Load Data
@@ -143,11 +144,11 @@ df %>%
   ggplot(aes(x = 年, y = value, color = label)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept=0.5, color="red", linetype="dashed") +
+  geom_hline(yintercept=0.5, color="black", linetype="dashed") +
   ylim(0.25, 0.75) +
   facet_wrap(チーム ~ .) +
   theme_gray(base_family = "HiraKakuPro-W3") +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
 ```{r}
@@ -155,7 +156,7 @@ df %>%
   ggplot(aes(x = 年, y = 差分, color = チーム)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept=0, color="red", linetype="dashed") +
+  geom_hline(yintercept=0, color="black", linetype="dashed") +
   #ylim(0.25, 0.75) +
   facet_wrap(チーム ~ .) +
   theme_gray(base_family = "HiraKakuPro-W3") +
@@ -178,22 +179,41 @@ df %>%
 ```
 
 
-## 実際の勝率とピタゴラス勝率の差が大きいチーム
+## datatable
 
-### プラス方向
+### all
 ```{r}
 df %>% 
-  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
   arrange(desc(差分)) %>% 
   DT::datatable()
 ```
 
-### マイナス方向
+### ピタゴラス勝率ベスト/ワースト3
 ```{r}
 df %>% 
-  mutate(差分 = round(勝率 - ピタゴラス勝率, digits = 4)) %>% 
-  arrange(差分) %>% 
-  DT::datatable()
+  arrange(desc(ピタゴラス勝率)) %>% 
+  head(n = 3) %>% 
+  kable()
 ```
 
+```{r}
+df %>% 
+  arrange(ピタゴラス勝率) %>% 
+  head(n = 3) %>% 
+  kable()
+```
 
+### ピタゴラス勝率と実際の勝率の差のベスト/ワースト3
+```{r}
+df %>% 
+  arrange(desc(差分)) %>% 
+  head(n = 3) %>% 
+  kable()
+```
+
+```{r}
+df %>% 
+  arrange(差分) %>% 
+  head(n = 3) %>% 
+  kable()
+```
